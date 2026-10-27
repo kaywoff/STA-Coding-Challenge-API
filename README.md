@@ -93,3 +93,4 @@ percentages). This is my reading of "total discounted percentage"; if the intent
 I used an AI assistant (Claude, by Anthropic) to help plan this solution and to draft the code, the feature files and
 this README. I reviewed the code, ran the suite, and I understand how each part works and can explain any of the design
 choices above.
+# dummyjson-api-tests
