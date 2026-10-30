@@ -22,7 +22,7 @@ public class Hair
 
 public class Address
 {
-    // The API calls the street line "address", which cannot be a property name inside a class called Address.
+    // The API willcalls the street line "address", which cannot be a property name inside a class called Address.
     [JsonPropertyName("address")]
     public string Street { get; set; } = "";
     public string City { get; set; } = "";

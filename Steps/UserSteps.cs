@@ -57,7 +57,7 @@ public class UserSteps
         search.Total.ShouldBe(counted);
     }
 
-    // ---- Add a user ----
+    //  Adding a user 
 
     [Given("I have a new user with these details")]
     public void GivenIHaveANewUser(DataTable table)

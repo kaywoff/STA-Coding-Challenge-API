@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 namespace DummyJson.ApiTests.Config;
 
 /// <summary>
-/// Everything that might change between environments lives in appsettings.json,
+/// with best practices Everything that might change between environments lives in appsettings.json,
 /// so the steps never contain a URL or a password.
 /// </summary>
 public class TestSettings

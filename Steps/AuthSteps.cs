@@ -42,7 +42,7 @@ public class AuthSteps
         _state.AccessToken.ShouldNotBeNullOrWhiteSpace();
     }
 
-    // Used by scenarios that need a token but are not about logging in themselves.
+    // Used a scenarios that needed a token but are not about logging in themselves
     [Given("I am logged in as a valid user")]
     public async Task GivenIAmLoggedIn()
     {

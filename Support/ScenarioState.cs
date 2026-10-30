@@ -4,10 +4,9 @@ using DummyJson.ApiTests.Models;
 
 namespace DummyJson.ApiTests.Support;
 
-/// <summary>
-/// Whatever one scenario needs to hand from one step to the next.
-/// Reqnroll creates a fresh instance per scenario, so scenarios never share data.
-/// </summary>
+/// <>
+/// Reqnroll creates a fresh instance per scenario, scenarios never share data.
+/// <remarks>
 public class ScenarioState
 {
     public HttpStatusCode LastStatusCode { get; set; }
@@ -32,7 +31,7 @@ public class ScenarioState
     public Cart? Cart { get; set; }
 
     /// <summary>
-    /// Remembers the status code and raw body of a response, and hands back the parsed body.
+    /// Remembers the status code and raw body of a response, and hands back the parsed body (i will verify all again ).
     /// </summary>
     public T? Record<T>(ApiResponse<T> response)
     {

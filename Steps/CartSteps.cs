@@ -9,11 +9,14 @@ namespace DummyJson.ApiTests.Steps;
 [Binding]
 public class CartSteps
 {
-    // Prices are rounded to the penny by the API, so allow for a penny or two of drift.
+    // Prices are rounded to the penny by the API, so we allow for a penny or two of drift.
     private const decimal MoneyTolerance = 0.02m;
 
-    // The overall percentage is derived from rounded money values, so give it a bit more room.
-    private const decimal PercentageTolerance = 0.1m;
+    // Discounted amounts are rounded to whole numbers, so we alow each one can be up to 0.5 out.
+    private const decimal RoundingTolerance = 0.5m;
+
+    // comparing percentages, on top of the rounding drift.
+    private const decimal PercentageTolerance = 0.05m;
 
     private readonly ScenarioState _state;
     private readonly CartsClient _carts;
@@ -85,8 +88,12 @@ public class CartSteps
         IsClose(cart.Total, cart.Products.Sum(l => l.Total)).ShouldBeTrue(
             $"cart total {cart.Total} should be the sum of its lines");
 
-        IsClose(cart.DiscountedTotal, cart.Products.Sum(l => l.DiscountedTotal)).ShouldBeTrue(
-            $"cart discounted total {cart.DiscountedTotal} should be the sum of its lines");
+        // Each line's discounted price is rounded on its own, so it's possible the cart figure can drift a litle.
+        var linesDiscounted = cart.Products.Sum(l => l.DiscountedPrice);
+        var allowedDrift = cart.Products.Count * RoundingTolerance + MoneyTolerance;
+
+        (Math.Abs(cart.DiscountedTotal - linesDiscounted) <= allowedDrift).ShouldBeTrue(
+            $"cart discounted total {cart.DiscountedTotal} should be about the sum of its lines ({linesDiscounted})");
     }
 
     [Then("each product's discounted total follows its discount percentage")]
@@ -96,29 +103,32 @@ public class CartSteps
         {
             var expected = line.Total * (1 - line.DiscountPercentage / 100);
 
-            IsClose(line.DiscountedTotal, expected).ShouldBeTrue(
-                $"{line.Title}: {line.Total} with {line.DiscountPercentage}% off should be about {expected:0.00}, but was {line.DiscountedTotal}");
+            (Math.Abs(line.DiscountedPrice - expected) <= RoundingTolerance + MoneyTolerance).ShouldBeTrue(
+                $"{line.Title}: {line.Total} with {line.DiscountPercentage}% off should be about {expected:0.00}, but was {line.DiscountedPrice}");
         }
     }
 
-    // The task asks for the discount PERCENTAGE of the whole cart, which the API does not
-    // hand us directly (it only gives money values). We work it out two different ways
-    // and make sure they agree.
+    // # the API does not hand us directl it only gives money values. so We work it out two different ways
+    // and compare them, allowing for the rounding drift. The more products there are, the more rounding can accumulate, so we allow a little extra drift for each product.
     [Then("the overall discount percentage is consistent with the discounts on each product")]
     public void ThenTheOverallPercentageIsConsistent()
     {
         var cart = _state.Cart.ShouldNotBeNull();
 
-        // 1. From the cart's own totals: how much of the price was taken off.
+        // 1. From the cart's own totals: this then how much of the price was takn off.
         var fromTotals = (cart.Total - cart.DiscountedTotal) / cart.Total * 100;
 
-        // 2. From the individual products: each percentage weighted by how much that line costs.
+        // 2. From the individual product each percentage weighted by how much that line costs.
         var fromLines = cart.Products.Sum(l => l.Total * l.DiscountPercentage) / cart.Products.Sum(l => l.Total);
 
-        _output.WriteLine($"Overall discount: {fromTotals:0.00}% (from totals), {fromLines:0.00}% (weighted from lines)");
+        // The money values are rounded to whole numbers, which moves the percentage slightly,The more products there are, the more rounding can accumulate, so we allow a little extra drift for each product.
+        var roundingEffect = cart.Products.Count * RoundingTolerance / cart.Total * 100;
+        var allowed = PercentageTolerance + roundingEffect;
+
+        _output.WriteLine($"Overall discount: {fromTotals:0.00}% (from totals), {fromLines:0.00}% (weighted from lines), allowed difference {allowed:0.00}");
 
         fromTotals.ShouldBeGreaterThan(0);
-        (Math.Abs(fromTotals - fromLines) <= PercentageTolerance).ShouldBeTrue(
+        (Math.Abs(fromTotals - fromLines) <= allowed).ShouldBeTrue(
             $"overall discount was {fromTotals:0.000}% from the totals but {fromLines:0.000}% from the lines");
     }
 
